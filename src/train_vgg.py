@@ -13,6 +13,12 @@ SEED = 42
 LR = 0.001
 N_EPOCHS = 2
 
+# Pre-trained VGG neural networks
+MODELS_VGG = {
+    "vgg16": models.vgg16(pretrained=True),
+    "vgg19": models.vgg19(pretrained=True),
+    "vgg19_bn": models.vgg19_bn(pretrained=True)
+}
 
 if __name__ == "__main__":
 
@@ -25,24 +31,25 @@ if __name__ == "__main__":
     print(f"{len(train_loader)} train batches of size {BATCH_SIZE}")
     print(classes)
 
-    # Instantiate a pre-trained VGG16 neural network
-    vgg16 = models.vgg16(pretrained=True)
-    # Freeze "feature" (conv+pool) layers, train all FC layers
-    trainable_layers = vgg16.classifier
-    prepare_model(model=vgg16,
-                  trainable_layers=trainable_layers,
-                  n_outputs=len(classes))
+    for model_name, vgg in MODELS_VGG.items():
+        print(f"\n\n{model_name.upper()}\n\n")
 
-    # TODO remove tmp check
-    for layer in [vgg16.features, vgg16.classifier]:
-        print(layer)
-        for p in layer.parameters():
-            print(f"requires_grad: {p.requires_grad}")
+        # Freeze "feature" (conv+pool) layers, train all FC layers
+        trainable_layers = vgg.classifier
+        prepare_model(model=vgg,
+                      trainable_layers=trainable_layers,
+                      n_outputs=len(classes))
 
-    # Train model
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)
-    train_model(vgg16, train_loader, criterion, optimizer, N_EPOCHS)
+        # TODO remove tmp check
+        for layer in [vgg.features, vgg.classifier]:
+            print(layer)
+            for p in layer.parameters():
+                print(f"requires_grad: {p.requires_grad}")
 
-    # Evaluate model
-    evaluate_model(vgg16, test_loader, classes, criterion)
+        # Train model
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)
+        train_model(vgg, train_loader, criterion, optimizer, N_EPOCHS)
+
+        # Evaluate model
+        evaluate_model(vgg, test_loader, classes, criterion)
