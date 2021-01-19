@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision
+from torchvision import models
 
 from tools import get_data_loaders
 
@@ -22,50 +22,46 @@ else:
     print("CUDA is not available.  Training on CPU ...")
 
 
-if __name__ == "__main__":
+def prepare_model(model,
+                  trainable_layers,
+                  n_outputs):
+    """Prepare model to training:
 
-    # Load data
-    loaders, classes = get_data_loaders(
-        batch_size=BATCH_SIZE,
-        valid_split=VALID_SPLIT,
-        seed=SEED)
-    train_loader, valid_loader, test_loader = loaders
-    print(f"{len(train_loader)} train batches of size {BATCH_SIZE}")
-    print(classes)
+    - Replace the last FC layer by a new one, according to n_outputs;
+    - Freeze the part of the network that will be used as feature extractor;
+    - Set other part of the network as trainable.
 
-    # Instantiate a pre-trained VGG16 neural network
-    vgg16 = torchvision.models.vgg16(pretrained=True)
-    print(vgg16)
-
-    # Freeze weights for all "features" (convolution and pooling) layers
-    for param in vgg16.features.parameters():
-        param.requires_grad = False
+    Returns
+    -------
+    None
+        No return, since choosing which part to freeze or train
+        is applied in place.
+    """
+    # Freeze all layers, then set trainable layers to train
+    model.requires_grad_(False)
+    for p in trainable_layers.parameters():
+        p.requires_grad = True
 
     # Replace the last fully connected layer
     n_inputs = vgg16.classifier[-1].in_features
     last_layer = nn.Linear(in_features=n_inputs,
-                           out_features=len(classes))
+                           out_features=n_outputs)
     vgg16.classifier[-1] = last_layer
 
-    # TODO remove tmp check
-    for cl in vgg16.classifier:
-        print(cl)
-        for p in cl.parameters():
-            print(f"requires_grad: {p.requires_grad}")
+
+def train_model(model,
+                train_loader,
+                criterion,
+                optimizer,
+                n_epochs):
 
     if train_on_gpu:
-        vgg16.cuda()
+        model.cuda()
 
-    # Initialize loss and optimizer
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(vgg16.classifier.parameters(), lr=LR)
+    model.train()
 
-    #############
-    ### TRAIN ###
-    #############
-    vgg16.train()
-
-    for epoch in range(N_EPOCHS):
+    for epoch in range(n_epochs):
+        print(f"epoch {epoch+1}")
 
         train_loss = 0.0
 
@@ -74,17 +70,14 @@ if __name__ == "__main__":
                 data, target = data.cuda(), target.cuda()
 
             optimizer.zero_grad()  # clear all gradients
-            output = vgg16(data)  # forward pass: predict
+            output = model(data)  # forward pass: predict
             loss = criterion(output, target)
             loss.backward()  # backward pass: compute gradient of the loss
             optimizer.step()  # update parameters
 
             batch_loss = loss.item() * data.size(0)
             if (i + 1) % 10 == 0:
-                print(
-                    f"batch: {i+1}\t"
-                    f"Training loss per example: {batch_loss/BATCH_SIZE}")
-                # TODO remove batch_size, use loss.item()
+                print(f"batch: {i+1}\tTraining loss per example: {loss.item()}")
             train_loss += batch_loss
 
         # average loss per epoch
@@ -92,14 +85,18 @@ if __name__ == "__main__":
         print(f"Epoch: {epoch+1} \tTraining Loss: {train_loss:.6f}")
         # TODO return losses_train, losses_valid; plot in notebook
 
-    ################
-    ### EVALUATE ###
-    ################
-    test_loss = 0.0
-    class_correct = list(0. for i in range(len(classes)))
-    class_total = list(0. for i in range(len(classes)))
 
-    vgg16.eval()  # eval mode
+def evaluate_model(model,
+                   test_loader,
+                   classes):
+    """
+    Evaluate model's prediction quality.
+    """
+    test_loss = 0.0
+    class_correct = [0. * len(classes)]
+    class_total = [0. * len(classes)]
+
+    model.eval()  # eval mode
 
     # iterate over test data
     for i, (data, target) in enumerate(test_loader):
@@ -108,7 +105,7 @@ if __name__ == "__main__":
         if train_on_gpu:
             data, target = data.cuda(), target.cuda()
         # forward pass: compute predicted outputs by passing inputs to the model
-        output = vgg16(data)
+        output = model(data)
         # calculate the batch loss
         loss = criterion(output, target)
 
@@ -147,3 +144,37 @@ if __name__ == "__main__":
     print('\nTest Accuracy (Overall): %2d%% (%2d/%2d)' % (
         100. * np.sum(class_correct) / np.sum(class_total),
         np.sum(class_correct), np.sum(class_total)))
+
+
+if __name__ == "__main__":
+
+    # Load data
+    loaders, classes = get_data_loaders(
+        batch_size=BATCH_SIZE,
+        valid_split=VALID_SPLIT,
+        seed=SEED)
+    train_loader, valid_loader, test_loader = loaders
+    print(f"{len(train_loader)} train batches of size {BATCH_SIZE}")
+    print(classes)
+
+    # Instantiate a pre-trained VGG16 neural network
+    vgg16 = models.vgg16(pretrained=True)
+    # Freeze "feature" (conv+pool) layers, train all FC layers
+    trainable_layers = vgg16.classifier
+    prepare_model(model=vgg16,
+                  trainable_layers=trainable_layers,
+                  n_outputs=len(classes))
+
+    # TODO remove tmp check
+    for layer in [vgg16.features, vgg16.classifier]:
+        print(layer)
+        for p in layer.parameters():
+            print(f"requires_grad: {p.requires_grad}")
+
+    # Train model
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)
+    train_model(vgg16, train_loader, criterion, optimizer, N_EPOCHS)
+
+    # Evaluate model
+    evaluate_model(vgg16, test_loader, classes)
