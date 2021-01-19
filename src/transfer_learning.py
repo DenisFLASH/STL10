@@ -49,6 +49,7 @@ def train_model(model,
     if train_on_gpu:
         model.cuda()
 
+    print(f"\nTraining the model\n")
     model.train()
 
     for epoch in range(n_epochs):
@@ -67,7 +68,7 @@ def train_model(model,
             optimizer.step()  # update parameters
 
             batch_loss = loss.item() * data.size(0)
-            if (i + 1) % 10 == 0:
+            if (i + 1) % 100 == 0:
                 print(f"batch: {i+1}\tTraining loss per example: {loss.item()}")
             train_loss += batch_loss
 
@@ -101,7 +102,7 @@ def evaluate_model(model,
         # calculate the batch loss
         loss = criterion(output, target)
         test_loss += loss.item() * data.size(0)
-        if (i + 1) % 10 == 0:
+        if (i + 1) % 100 == 0:
             print(f"test batch {i + 1}/{len(test_loader)}, loss {loss.item()}")
 
         # convert output probabilities to predicted class
