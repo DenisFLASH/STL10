@@ -45,4 +45,4 @@ if __name__ == "__main__":
     train_model(vgg16, train_loader, criterion, optimizer, N_EPOCHS)
 
     # Evaluate model
-    evaluate_model(vgg16, test_loader, classes)
+    evaluate_model(vgg16, test_loader, classes, criterion)

@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+from sklearn.metrics import confusion_matrix
 import torch
 import torch.nn as nn
 
@@ -70,7 +72,7 @@ def train_model(model,
             train_loss += batch_loss
 
         # average loss per epoch
-        train_loss = train_loss / len(train_loader.dataset)
+        train_loss /= len(train_loader.dataset)
         print(f"Epoch: {epoch+1} \tTraining Loss: {train_loss:.6f}")
         # TODO return losses_train, losses_valid; plot in notebook
 
@@ -78,14 +80,13 @@ def train_model(model,
 def evaluate_model(model,
                    test_loader,
                    classes,
-                   criterion,
-                   batch_size):
+                   criterion):
     """
     Evaluate model's prediction quality.
     """
     test_loss = 0.0
-    class_correct = [0. * len(classes)]
-    class_total = [0. * len(classes)]
+    all_preds = np.array([], "int")
+    all_targets = np.array([], "int")
 
     model.eval()  # eval mode
 
@@ -99,40 +100,31 @@ def evaluate_model(model,
         output = model(data)
         # calculate the batch loss
         loss = criterion(output, target)
-
+        test_loss += loss.item() * data.size(0)
         if (i + 1) % 10 == 0:
             print(f"test batch {i + 1}/{len(test_loader)}, loss {loss.item()}")
 
-        # update  test loss
-        test_loss += loss.item() * data.size(0)
         # convert output probabilities to predicted class
         _, pred = torch.max(output, 1)
-        # compare predictions to true label
-        correct_tensor = pred.eq(target.data.view_as(pred))
-        correct = np.squeeze(
-            correct_tensor.numpy()) if not train_on_gpu else np.squeeze(
-            correct_tensor.cpu().numpy())
-        # calculate test accuracy for each object class
-        for i in range(batch_size):
-            # TODO replace 'i' or vectorize the calculation (confusion matrix?)
-            label = target.data[i]
-            class_correct[label] += correct[i].item()
-            class_total[label] += 1
+        all_preds = np.concatenate((all_preds, pred.numpy()))
+        all_targets = np.concatenate((all_targets, target.numpy()))
 
-    # calculate avg test loss
-    test_loss = test_loss / len(test_loader.dataset)
-    print(f"Test Loss: {test_loss:.6f}\n")
+    test_loss /= len(test_loader.dataset)
+    print(f"Avg test Loss: {test_loss:.6f}\n")
 
-    for i in range(len(classes)):
-        if class_total[i] > 0:
-            print('Test Accuracy of %5s: %2d%% (%2d/%2d)' % (
-                classes[i], 100 * class_correct[i] / class_total[i],
-                np.sum(class_correct[i]), np.sum(class_total[i])))
-        else:
-            print('Test Accuracy of %5s: N/A (no training examples)' % (
-            classes[i]))
-    # TODO confusion matrix
-    print('\nTest Accuracy (Overall): %2d%% (%2d/%2d)' % (
-        100. * np.sum(class_correct) / np.sum(class_total),
-        np.sum(class_correct), np.sum(class_total)))
+    cm = confusion_matrix(y_true=all_targets, y_pred=all_preds)
+    n_total = cm.sum()
+    n_correct = cm.diagonal().sum()
+    acc_total = 100 * n_correct / n_total
+    print(f"Total test accuracy: {acc_total:.1f}% ({n_correct}/{n_total})\n")
 
+    for i, cl in enumerate(classes):
+        tp = cm[i, i]
+        n = cm[i].sum()
+        acc = 100 * tp / n
+        print(f"Test accuracy of {cl}:\t {acc:.0f}% ({tp}/{n})")
+
+    df_cm = pd.DataFrame(cm,
+                         columns=classes,
+                         index=[c.upper() for c in classes])
+    print(f"\nconfusion_matrix (TRUE label is uppercase):\n\n{df_cm}")
