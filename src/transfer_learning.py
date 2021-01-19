@@ -43,10 +43,10 @@ def prepare_model(model,
         p.requires_grad = True
 
     # Replace the last fully connected layer
-    n_inputs = vgg16.classifier[-1].in_features
+    n_inputs = model.classifier[-1].in_features
     last_layer = nn.Linear(in_features=n_inputs,
                            out_features=n_outputs)
-    vgg16.classifier[-1] = last_layer
+    model.classifier[-1] = last_layer
 
 
 def train_model(model,
