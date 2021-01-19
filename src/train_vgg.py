@@ -14,10 +14,13 @@ LR = 0.001
 N_EPOCHS = 2
 
 # Pre-trained VGG neural networks
-MODELS_VGG = {
+MODELS = {
     "vgg16": models.vgg16(pretrained=True),
     "vgg19": models.vgg19(pretrained=True),
-    "vgg19_bn": models.vgg19_bn(pretrained=True)
+    "vgg19_bn": models.vgg19_bn(pretrained=True),
+    "resnet18": models.resnet18(pretrained=True),
+    "resnet34": models.resnet34(pretrained=True),
+    "resnet50": models.resnet50(pretrained=True)
 }
 
 if __name__ == "__main__":
@@ -31,7 +34,7 @@ if __name__ == "__main__":
     print(f"{len(train_loader)} train batches of size {BATCH_SIZE}")
     print(classes)
 
-    for model_name, vgg in MODELS_VGG.items():
+    for model_name, vgg in MODELS.items():
         print(f"\n\n{model_name.upper()}\n\n")
 
         replace_last_layer(model=vgg,
