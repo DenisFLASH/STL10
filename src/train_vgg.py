@@ -40,12 +40,6 @@ if __name__ == "__main__":
                       trainable_layers=trainable_layers,
                       n_outputs=len(classes))
 
-        # TODO remove tmp check
-        for layer in [vgg.features, vgg.classifier]:
-            print(layer)
-            for p in layer.parameters():
-                print(f"requires_grad: {p.requires_grad}")
-
         # Train model
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)

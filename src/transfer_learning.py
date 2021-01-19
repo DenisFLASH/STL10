@@ -13,9 +13,9 @@ else:
     print("CUDA is not available.  Training on CPU ...")
 
 
-def prepare_model(model,
-                  trainable_layers,
-                  n_outputs):
+def prepare_model(model: nn.Module,
+                  trainable_layers: nn.Module,
+                  n_outputs: int):
     """Prepare model to training:
 
     - Replace the last FC layer by a new one, according to n_outputs;
@@ -34,10 +34,19 @@ def prepare_model(model,
         p.requires_grad = True
 
     # Replace the last fully connected layer
-    n_inputs = model.classifier[-1].in_features
-    last_layer = nn.Linear(in_features=n_inputs,
-                           out_features=n_outputs)
-    model.classifier[-1] = last_layer
+    if model.__class__.__name__ == "VGG":
+        print("replacing the last layer of VGG model")
+        n_inputs = model.classifier[-1].in_features
+        last_layer = nn.Linear(in_features=n_inputs, out_features=n_outputs)
+        model.classifier[-1] = last_layer
+
+    elif model.__class__.__name__ == "ResNet":
+        print("replacing the last layer of ResNet model")
+        n_inputs = model.fc.in_features
+        last_layer = nn.Linear(in_features=n_inputs, out_features=n_outputs)
+        model.fc = last_layer
+
+    print(model)
 
 
 def train_model(model,
