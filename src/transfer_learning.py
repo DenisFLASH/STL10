@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -54,7 +55,9 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(vgg16.classifier.parameters(), lr=LR)
 
-    # Train the model
+    #############
+    ### TRAIN ###
+    #############
     vgg16.train()
 
     for epoch in range(N_EPOCHS):
@@ -81,3 +84,59 @@ if __name__ == "__main__":
         # average loss per epoch
         train_loss = train_loss / len(train_loader.dataset)
         print(f"Epoch: {epoch+1} \tTraining Loss: {train_loss:.6f}")
+
+
+    ################
+    ### EVALUATE ###
+    ################
+    test_loss = 0.0
+    class_correct = list(0. for i in range(len(classes)))
+    class_total = list(0. for i in range(len(classes)))
+
+    vgg16.eval()  # eval mode
+
+    # iterate over test data
+    for i, (data, target) in enumerate(test_loader):
+
+        # move tensors to GPU if CUDA is available
+        if train_on_gpu:
+            data, target = data.cuda(), target.cuda()
+        # forward pass: compute predicted outputs by passing inputs to the model
+        output = vgg16(data)
+        # calculate the batch loss
+        loss = criterion(output, target)
+
+        if (i + 1) % 10 == 0:
+            print(f"test batch {i + 1}/{len(test_loader)}, loss {loss.item()}")
+
+        # update  test loss
+        test_loss += loss.item() * data.size(0)
+        # convert output probabilities to predicted class
+        _, pred = torch.max(output, 1)
+        # compare predictions to true label
+        correct_tensor = pred.eq(target.data.view_as(pred))
+        correct = np.squeeze(
+            correct_tensor.numpy()) if not train_on_gpu else np.squeeze(
+            correct_tensor.cpu().numpy())
+        # calculate test accuracy for each object class
+        for i in range(BATCH_SIZE):
+            label = target.data[i]
+            class_correct[label] += correct[i].item()
+            class_total[label] += 1
+
+    # calculate avg test loss
+    test_loss = test_loss / len(test_loader.dataset)
+    print(f"Test Loss: {test_loss:.6f}\n")
+
+    for i in range(len(classes)):
+        if class_total[i] > 0:
+            print('Test Accuracy of %5s: %2d%% (%2d/%2d)' % (
+                classes[i], 100 * class_correct[i] / class_total[i],
+                np.sum(class_correct[i]), np.sum(class_total[i])))
+        else:
+            print('Test Accuracy of %5s: N/A (no training examples)' % (
+            classes[i]))
+
+    print('\nTest Accuracy (Overall): %2d%% (%2d/%2d)' % (
+        100. * np.sum(class_correct) / np.sum(class_total),
+        np.sum(class_correct), np.sum(class_total)))
