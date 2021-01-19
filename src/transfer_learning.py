@@ -106,6 +106,10 @@ def evaluate_model(model,
 
         # convert output probabilities to predicted class
         _, pred = torch.max(output, 1)
+
+        if train_on_gpu:
+            pred, target = pred.cpu(), target.cpu()
+
         all_preds = np.concatenate((all_preds, pred.numpy()))
         all_targets = np.concatenate((all_targets, target.numpy()))
 
