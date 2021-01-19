@@ -3,7 +3,7 @@ import torch.optim as optim
 from torchvision import models
 
 from tools import get_data_loaders
-from transfer_learning import prepare_model, train_model, evaluate_model
+from transfer_learning import replace_last_layer, set_trainable_layers, train_model, evaluate_model
 
 
 BATCH_SIZE = 20
@@ -34,11 +34,9 @@ if __name__ == "__main__":
     for model_name, vgg in MODELS_VGG.items():
         print(f"\n\n{model_name.upper()}\n\n")
 
-        # Freeze "feature" (conv+pool) layers, train all FC layers
-        trainable_layers = vgg.classifier
-        prepare_model(model=vgg,
-                      trainable_layers=trainable_layers,
-                      n_outputs=len(classes))
+        replace_last_layer(model=vgg,
+                           n_outputs=len(classes))
+        trainable_layers = set_trainable_layers(model=vgg)
 
         # Train model
         criterion = nn.CrossEntropyLoss()
