@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision
 
-import tools
+from tools import get_data_loaders
 
 
 BATCH_SIZE = 20
@@ -25,7 +25,7 @@ else:
 if __name__ == "__main__":
 
     # Load data
-    loaders, classes = tools.get_data_loaders(
+    loaders, classes = get_data_loaders(
         batch_size=BATCH_SIZE,
         valid_split=VALID_SPLIT,
         seed=SEED)
@@ -41,12 +41,17 @@ if __name__ == "__main__":
     for param in vgg16.features.parameters():
         param.requires_grad = False
 
-    # Replace the last fully connected layer (which has index 6 for VGG)
-    n_inputs = vgg16.classifier[6].in_features
+    # Replace the last fully connected layer
+    n_inputs = vgg16.classifier[-1].in_features
     last_layer = nn.Linear(in_features=n_inputs,
                            out_features=len(classes))
-    vgg16.classifier[6] = last_layer
-    print(vgg16.classifier[6])
+    vgg16.classifier[-1] = last_layer
+
+    # TODO remove tmp check
+    for cl in vgg16.classifier:
+        print(cl)
+        for p in cl.parameters():
+            print(f"requires_grad: {p.requires_grad}")
 
     if train_on_gpu:
         vgg16.cuda()
@@ -79,12 +84,13 @@ if __name__ == "__main__":
                 print(
                     f"batch: {i+1}\t"
                     f"Training loss per example: {batch_loss/BATCH_SIZE}")
+                # TODO remove batch_size, use loss.item()
             train_loss += batch_loss
 
         # average loss per epoch
         train_loss = train_loss / len(train_loader.dataset)
         print(f"Epoch: {epoch+1} \tTraining Loss: {train_loss:.6f}")
-
+        # TODO return losses_train, losses_valid; plot in notebook
 
     ################
     ### EVALUATE ###
@@ -120,6 +126,7 @@ if __name__ == "__main__":
             correct_tensor.cpu().numpy())
         # calculate test accuracy for each object class
         for i in range(BATCH_SIZE):
+            # TODO replace 'i' or vectorize the calculation (confusion matrix?)
             label = target.data[i]
             class_correct[label] += correct[i].item()
             class_total[label] += 1
@@ -136,7 +143,7 @@ if __name__ == "__main__":
         else:
             print('Test Accuracy of %5s: N/A (no training examples)' % (
             classes[i]))
-
+    # TODO confusion matrix
     print('\nTest Accuracy (Overall): %2d%% (%2d/%2d)' % (
         100. * np.sum(class_correct) / np.sum(class_total),
         np.sum(class_correct), np.sum(class_total)))
