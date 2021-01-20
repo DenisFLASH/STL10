@@ -1,3 +1,5 @@
+import sys
+
 from torchvision import models
 
 from tools import get_data_loaders, train_model
@@ -8,8 +10,8 @@ BATCH_SIZE = 20
 VALID_SPLIT = 0.2
 SEED = 42
 
-LR = {"warmup": 0.01, "fine-tune": 0.001}
-EPOCHS = {"warmup": 2, "fine-tune": 2}
+#LR = {"warmup": 0.01, "fine-tune": 0.001}
+#EPOCHS = {"warmup": 2, "fine-tune": 2}
 # TODO pass as command line args
 
 # Pre-trained VGG neural networks
@@ -19,6 +21,16 @@ MODELS = {
 }
 
 if __name__ == "__main__":
+
+    EPOCHS = {
+        "warmup": int(sys.argv[1]),
+        "fine-tune": int(sys.argv[3])
+    }
+    LR = {
+        "warmup": float(sys.argv[2]),
+        "fine-tune": float(sys.argv[4])
+    }
+    print(f"params. Epochs: {EPOCHS}, learning rates: {LR}")
 
     # Load data
     loaders, classes = get_data_loaders(

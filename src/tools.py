@@ -74,6 +74,7 @@ def train_model(model,
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(trainable_params, lr=lr)
+    print(f"Learning rate: {lr}")
 
     valid_loss_min = np.Inf  # track change in validation loss to save the model
 
