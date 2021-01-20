@@ -10,16 +10,12 @@ BATCH_SIZE = 20
 VALID_SPLIT = 0.2
 SEED = 42
 
-LR = 0.001
+LR = 0.01
 N_EPOCHS = 2
 
 # Pre-trained VGG neural networks
 MODELS = {
-    "vgg16": models.vgg16(pretrained=True),
-    "vgg19": models.vgg19(pretrained=True),
     "vgg19_bn": models.vgg19_bn(pretrained=True),
-    "resnet18": models.resnet18(pretrained=True),
-    "resnet34": models.resnet34(pretrained=True),
     "resnet50": models.resnet50(pretrained=True)
 }
 

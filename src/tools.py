@@ -100,7 +100,6 @@ def train_model(model,
             loss = criterion(output, target)
             valid_loss += loss.item()
 
-        print(f"Train loss: {train_loss:.6f} \tValid loss: {valid_loss:.6f}")
 
         # average loss per epoch
         train_loss /= len(train_loader)
@@ -146,7 +145,7 @@ def evaluate_model(model,
         all_targets = np.concatenate((all_targets, target.numpy()))
 
     test_loss /= len(test_loader.dataset)
-    print(f"Avg test Loss: {test_loss:.6f}\n")
+    print(f"\nTest Loss: {test_loss:.6f}\n")
 
     cm = confusion_matrix(y_true=all_targets, y_pred=all_preds)
     n_total = cm.sum()
