@@ -44,7 +44,12 @@ if __name__ == "__main__":
         # Train model
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)
-        train_model(vgg, train_loader, criterion, optimizer, N_EPOCHS)
+        train_model(vgg,
+                    train_loader,
+                    valid_loader,
+                    criterion,
+                    optimizer,
+                    N_EPOCHS)
 
         # Evaluate model
         evaluate_model(vgg, test_loader, classes, criterion)

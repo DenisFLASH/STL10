@@ -54,20 +54,26 @@ def get_data_loaders(batch_size, valid_split, seed):
 
 def train_model(model,
                 train_loader,
+                valid_loader,
                 criterion,
                 optimizer,
                 n_epochs):
 
+    print(f"\nTraining the model\n")
+
     if train_on_gpu:
         model.cuda()
 
-    print(f"\nTraining the model\n")
-    model.train()
-
     for epoch in range(n_epochs):
-        print(f"epoch {epoch+1}")
+        print(f"Epoch {epoch+1}")
 
         train_loss = 0.0
+        valid_loss = 0.0
+
+        ###################
+        # train the model #
+        ###################
+        model.train()
 
         for i, (data, target) in enumerate(train_loader):
             if train_on_gpu:
@@ -75,18 +81,29 @@ def train_model(model,
 
             optimizer.zero_grad()  # clear all gradients
             output = model(data)  # forward pass: predict
-            loss = criterion(output, target)
+            loss = criterion(output, target)  # batch loss
             loss.backward()  # backward pass: compute gradient of the loss
             optimizer.step()  # update parameters
+            train_loss += loss.item() * data.size(0)
 
-            batch_loss = loss.item() * data.size(0)
-            if (i + 1) % 100 == 0:
-                print(f"batch: {i+1}\tTraining loss per example: {loss.item()}")
-            train_loss += batch_loss
+        ######################
+        # validate the model #
+        ######################
+        model.eval()
+        for data, target in valid_loader:
+            if train_on_gpu:
+                data, target = data.cuda(), target.cuda()
+
+            output = model(data)
+            loss = criterion(output, target)
+            valid_loss += loss.item()*data.size(0)
 
         # average loss per epoch
         train_loss /= len(train_loader.dataset)
-        print(f"Epoch: {epoch+1} \tTraining Loss: {train_loss:.6f}")
+        valid_loss /= len(valid_loader.dataset)
+
+        print(f"Epoch: {epoch+1} \tTraining Loss: {train_loss:.6f} \tValidation Loss: {valid_loss:.6f}")
+
         # TODO return losses_train, losses_valid; plot in notebook
 
 
@@ -104,7 +121,7 @@ def evaluate_model(model,
     model.eval()  # eval mode
 
     # iterate over test data
-    for i, (data, target) in enumerate(test_loader):
+    for data, target in test_loader:
 
         # move tensors to GPU if CUDA is available
         if train_on_gpu:
@@ -114,8 +131,6 @@ def evaluate_model(model,
         # calculate the batch loss
         loss = criterion(output, target)
         test_loss += loss.item() * data.size(0)
-        if (i + 1) % 100 == 0:
-            print(f"test batch {i + 1}/{len(test_loader)}, loss {loss.item()}")
 
         # convert output probabilities to predicted class
         _, pred = torch.max(output, 1)
