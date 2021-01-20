@@ -54,6 +54,7 @@ def get_data_loaders(batch_size, valid_split, seed):
 
 
 def train_model(model,
+                model_name,
                 train_loader,
                 valid_loader,
                 criterion,
@@ -64,6 +65,8 @@ def train_model(model,
 
     if train_on_gpu:
         model.cuda()
+
+    valid_loss_min = np.Inf  # track change in validation loss to save the model
 
     for epoch in range(n_epochs):
         print(f"Epoch {epoch+1}")
@@ -107,6 +110,13 @@ def train_model(model,
         valid_loss /= len(valid_loader)
 
         print(f"Train loss: {train_loss:.6f} \tValid loss: {valid_loss:.6f}")
+
+        # save model if validation loss has decreased
+        if valid_loss <= valid_loss_min:
+            model_path = model_name + ".pt"
+            print(f"Saving model to {model_path}")
+            torch.save(model.state_dict(), model_path)
+            valid_loss_min = valid_loss
 
         # TODO return losses_train, losses_valid; plot in notebook
 
