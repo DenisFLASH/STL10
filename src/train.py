@@ -1,7 +1,7 @@
 import torch.optim as optim
 from torchvision import models
 
-from tools import get_data_loaders, train_model, evaluate_model
+from tools import get_data_loaders, train_model
 from transfer_learning import replace_last_layer, set_trainable_layers
 
 
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         batch_size=BATCH_SIZE,
         valid_split=VALID_SPLIT,
         seed=SEED)
-    train_loader, valid_loader, test_loader = loaders
+    train_loader, valid_loader, _ = loaders
     print(f"{len(train_loader)} train batches of size {BATCH_SIZE}")
     print(classes)
 
@@ -43,9 +43,3 @@ if __name__ == "__main__":
                            valid_loader,
                            optimizer,
                            N_EPOCHS)
-
-        # Evaluate model
-        evaluate_model(model,
-                       path,
-                       test_loader,
-                       classes)

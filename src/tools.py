@@ -1,6 +1,7 @@
 """
 Common tools for loading data from a local dataset.
 """
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,9 @@ if train_on_gpu:
     print("CUDA is available!!!  Training on GPU ...")
 else:
     print("CUDA is not available.  Training on CPU ...")
+
+# relative path to the current file
+MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
 
 
 def get_data_loaders(batch_size, valid_split, seed):
@@ -114,25 +118,25 @@ def train_model(model,
 
         # save model if validation loss has decreased
         if valid_loss <= valid_loss_min:
-            path = model_name + ".pt"
+            path = MODEL_DIR / f"{model_name}.pt"
             print(f"Saving model to {path}")
-            torch.save(model.state_dict(), path)
+            torch.save(model, path)
             valid_loss_min = valid_loss
 
         # TODO return losses_train, losses_valid; plot in notebook
-
+        # TODO don't return path
     return path
 
 
-def evaluate_model(model,
-                   path,
+def evaluate_model(model_path,
                    test_loader,
                    classes):
     """
     Evaluate model's prediction quality.
     """
-    print(f"Load the model with the lowest validation loss from {path}")
-    model.load_state_dict(torch.load(path))
+    print(f"Load the model from {model_path}")
+    #model.load_state_dict(torch.load(path))
+    model = torch.load(model_path)
 
     test_loss = 0.0
     all_preds = np.array([], "int")
