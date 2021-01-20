@@ -1,6 +1,9 @@
 """
-Common tools for loading data from a local dataset.
+Common tools for:
+ - loading data from a local dataset;
+ - model training and evaluation.
 """
+import copy
 from pathlib import Path
 
 import numpy as np
@@ -67,8 +70,6 @@ def train_model(model,
                 lr,
                 n_epochs):
 
-    print(f"\nTraining the model\n")
-
     if train_on_gpu:
         model.cuda()
 
@@ -77,6 +78,7 @@ def train_model(model,
     print(f"Learning rate: {lr}")
 
     valid_loss_min = np.Inf  # track change in validation loss to save the model
+    best_model = None
 
     for epoch in range(n_epochs):
         print(f"Epoch {epoch+1}")
@@ -125,8 +127,9 @@ def train_model(model,
             print(f"Saving model to {path}")
             torch.save(model, path)
             valid_loss_min = valid_loss
+            best_model = copy.deepcopy(model)
 
-        # TODO return losses_train, losses_valid; plot in notebook
+    return best_model
 
 
 def evaluate_model(model_path,
