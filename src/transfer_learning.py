@@ -24,7 +24,7 @@ def replace_last_layer(model, n_outputs):
         model.fc = last_layer
 
 
-def set_trainable_layers(model: nn.Module):
+def freeze_feature_extractor(model: nn.Module):
     """Prepare model to training:
 
     - Freeze the part of the network that will be used as feature extractor;
@@ -32,19 +32,20 @@ def set_trainable_layers(model: nn.Module):
 
     Returns
     -------
-    trainable_layers : nn.Module
+    fc_layers : nn.Module
+        Trainable FC layers.
     """
-    trainable_layers = None
+    fc_layers = None
 
     model.requires_grad_(False)
 
     if model.__class__.__name__ == "VGG":
-        trainable_layers = model.classifier
+        fc_layers = model.classifier
 
     elif model.__class__.__name__ == "ResNet":
-        trainable_layers = model.fc
+        fc_layers = model.fc
 
-    for p in trainable_layers.parameters():
+    for p in fc_layers.parameters():
         p.requires_grad = True
 
-    return trainable_layers
+    return fc_layers

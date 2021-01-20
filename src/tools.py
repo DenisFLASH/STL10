@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
@@ -62,7 +63,8 @@ def train_model(model,
                 model_name,
                 train_loader,
                 valid_loader,
-                optimizer,
+                trainable_params,
+                lr,
                 n_epochs):
 
     print(f"\nTraining the model\n")
@@ -71,9 +73,9 @@ def train_model(model,
         model.cuda()
 
     criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(trainable_params, lr=lr)
 
     valid_loss_min = np.Inf  # track change in validation loss to save the model
-    path = None
 
     for epoch in range(n_epochs):
         print(f"Epoch {epoch+1}")
@@ -124,8 +126,6 @@ def train_model(model,
             valid_loss_min = valid_loss
 
         # TODO return losses_train, losses_valid; plot in notebook
-        # TODO don't return path
-    return path
 
 
 def evaluate_model(model_path,
@@ -135,7 +135,6 @@ def evaluate_model(model_path,
     Evaluate model's prediction quality.
     """
     print(f"Load the model from {model_path}")
-    #model.load_state_dict(torch.load(path))
     model = torch.load(model_path)
 
     test_loss = 0.0

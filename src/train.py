@@ -1,16 +1,16 @@
-import torch.optim as optim
 from torchvision import models
 
 from tools import get_data_loaders, train_model
-from transfer_learning import replace_last_layer, set_trainable_layers
+from transfer_learning import replace_last_layer, freeze_feature_extractor
 
 
 BATCH_SIZE = 20
 VALID_SPLIT = 0.2
 SEED = 42
 
-LR = 0.01
-N_EPOCHS = 2
+LR = {"warmup": 0.01, "fine-tune": 0.001}
+EPOCHS = {"warmup": 2, "fine-tune": 2}
+# TODO pass as command line args
 
 # Pre-trained VGG neural networks
 MODELS = {
@@ -32,14 +32,25 @@ if __name__ == "__main__":
     for model_name, model in MODELS.items():
         print(f"\n\n{model_name.upper()}\n\n")
 
-        replace_last_layer(model=model,
-                           n_outputs=len(classes))
-        trainable_layers = set_trainable_layers(model=model)
+        # Two-stage Transfer Learning
 
-        optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)
-        path = train_model(model,
-                           model_name,
-                           train_loader,
-                           valid_loader,
-                           optimizer,
-                           N_EPOCHS)
+        # 1) Replace last layer, freeze all feature layers, train FC layers
+        replace_last_layer(model=model, n_outputs=len(classes))
+        fc_layers = freeze_feature_extractor(model=model)
+        train_model(model=model,
+                    model_name=model_name,
+                    train_loader=train_loader,
+                    valid_loader=valid_loader,
+                    trainable_params=fc_layers.parameters(),
+                    lr=LR["warmup"],
+                    n_epochs=EPOCHS["warmup"])
+
+        # 2) Fine-tune the whole model
+        model.requires_grad_(True)
+        train_model(model=model,
+                    model_name=model_name,
+                    train_loader=train_loader,
+                    valid_loader=valid_loader,
+                    trainable_params=model.parameters(),
+                    lr=LR["fine-tune"],
+                    n_epochs=EPOCHS["fine-tune"])
