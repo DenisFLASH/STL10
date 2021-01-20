@@ -30,17 +30,17 @@ if __name__ == "__main__":
     print(f"{len(train_loader)} train batches of size {BATCH_SIZE}")
     print(classes)
 
-    for model_name, vgg in MODELS.items():
+    for model_name, model in MODELS.items():
         print(f"\n\n{model_name.upper()}\n\n")
 
-        replace_last_layer(model=vgg,
+        replace_last_layer(model=model,
                            n_outputs=len(classes))
-        trainable_layers = set_trainable_layers(model=vgg)
+        trainable_layers = set_trainable_layers(model=model)
 
         # Train model
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)
-        train_model(vgg,
+        train_model(model,
                     train_loader,
                     valid_loader,
                     criterion,
@@ -48,4 +48,4 @@ if __name__ == "__main__":
                     N_EPOCHS)
 
         # Evaluate model
-        evaluate_model(vgg, test_loader, classes, criterion)
+        evaluate_model(model, test_loader, classes, criterion)
