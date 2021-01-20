@@ -2,8 +2,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import models
 
-from tools import get_data_loaders
-from transfer_learning import replace_last_layer, set_trainable_layers, train_model, evaluate_model
+from tools import get_data_loaders, train_model, evaluate_model
+from transfer_learning import replace_last_layer, set_trainable_layers
 
 
 BATCH_SIZE = 20
