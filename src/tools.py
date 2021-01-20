@@ -67,6 +67,7 @@ def train_model(model,
         model.cuda()
 
     valid_loss_min = np.Inf  # track change in validation loss to save the model
+    path = None
 
     for epoch in range(n_epochs):
         print(f"Epoch {epoch+1}")
@@ -91,7 +92,6 @@ def train_model(model,
             loss.backward()  # backward pass: compute gradient of the loss
             optimizer.step()  # update parameters
 
-
         ######################
         # validate the model #
         ######################
@@ -104,7 +104,6 @@ def train_model(model,
             loss = criterion(output, target)
             valid_loss += loss.item()
 
-
         # average loss per epoch
         train_loss /= len(train_loader)
         valid_loss /= len(valid_loader)
@@ -113,21 +112,27 @@ def train_model(model,
 
         # save model if validation loss has decreased
         if valid_loss <= valid_loss_min:
-            model_path = model_name + ".pt"
-            print(f"Saving model to {model_path}")
-            torch.save(model.state_dict(), model_path)
+            path = model_name + ".pt"
+            print(f"Saving model to {path}")
+            torch.save(model.state_dict(), path)
             valid_loss_min = valid_loss
 
         # TODO return losses_train, losses_valid; plot in notebook
 
+    return path
+
 
 def evaluate_model(model,
+                   path,
                    test_loader,
                    classes,
                    criterion):
     """
     Evaluate model's prediction quality.
     """
+    print(f"Load the model with the lowest validation loss from {path}")
+    model.load_state_dict(torch.load(path))
+
     test_loss = 0.0
     all_preds = np.array([], "int")
     all_targets = np.array([], "int")
