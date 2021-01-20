@@ -81,10 +81,12 @@ def train_model(model,
 
             optimizer.zero_grad()  # clear all gradients
             output = model(data)  # forward pass: predict
-            loss = criterion(output, target)  # batch loss
+            loss = criterion(output, target)  # average loss per item
+            train_loss += loss.item()
+
             loss.backward()  # backward pass: compute gradient of the loss
             optimizer.step()  # update parameters
-            train_loss += loss.item() * data.size(0)
+
 
         ######################
         # validate the model #
@@ -96,13 +98,15 @@ def train_model(model,
 
             output = model(data)
             loss = criterion(output, target)
-            valid_loss += loss.item()*data.size(0)
+            valid_loss += loss.item()
+
+        print(f"Train loss: {train_loss:.6f} \tValid loss: {valid_loss:.6f}")
 
         # average loss per epoch
-        train_loss /= len(train_loader.dataset)
-        valid_loss /= len(valid_loader.dataset)
+        train_loss /= len(train_loader)
+        valid_loss /= len(valid_loader)
 
-        print(f"Epoch: {epoch+1} \tTraining Loss: {train_loss:.6f} \tValidation Loss: {valid_loss:.6f}")
+        print(f"Train loss: {train_loss:.6f} \tValid loss: {valid_loss:.6f}")
 
         # TODO return losses_train, losses_valid; plot in notebook
 
