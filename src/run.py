@@ -1,4 +1,3 @@
-import torch.nn as nn
 import torch.optim as optim
 from torchvision import models
 
@@ -37,14 +36,11 @@ if __name__ == "__main__":
                            n_outputs=len(classes))
         trainable_layers = set_trainable_layers(model=model)
 
-        # Train model
-        criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(trainable_layers.parameters(), lr=LR)
         path = train_model(model,
                            model_name,
                            train_loader,
                            valid_loader,
-                           criterion,
                            optimizer,
                            N_EPOCHS)
 
@@ -52,5 +48,4 @@ if __name__ == "__main__":
         evaluate_model(model,
                        path,
                        test_loader,
-                       classes,
-                       criterion)
+                       classes)
