@@ -9,6 +9,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets, transforms
+from tqdm import tqdm
 
 
 train_on_gpu = torch.cuda.is_available()
@@ -75,7 +76,7 @@ def train_model(model,
         ###################
         model.train()
 
-        for i, (data, target) in enumerate(train_loader):
+        for data, target in tqdm(train_loader):
             if train_on_gpu:
                 data, target = data.cuda(), target.cuda()
 
@@ -92,7 +93,7 @@ def train_model(model,
         # validate the model #
         ######################
         model.eval()
-        for data, target in valid_loader:
+        for data, target in tqdm(valid_loader):
             if train_on_gpu:
                 data, target = data.cuda(), target.cuda()
 
@@ -124,7 +125,7 @@ def evaluate_model(model,
     model.eval()  # eval mode
 
     # iterate over test data
-    for data, target in test_loader:
+    for data, target in tqdm(test_loader):
 
         # move tensors to GPU if CUDA is available
         if train_on_gpu:
