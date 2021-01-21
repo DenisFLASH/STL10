@@ -21,17 +21,23 @@ from tqdm import tqdm
 train_on_gpu = torch.cuda.is_available()
 
 if train_on_gpu:
-    print("CUDA is available!!!  Training on GPU ...")
+    print("CUDA is available!!! Using GPU ...")
 else:
-    print("CUDA is not available.  Training on CPU ...")
+    print("CUDA is not available. Using CPU ...")
 
 # relative path to the current file
 MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
 
 
 def get_data_loaders(batch_size, valid_split, seed):
-    transf = transforms.ToTensor()
-    # TODO crop, normalize (see Pytorch doc)
+    transf = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(  # the same normalization as for ImageNet
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225]
+        )
+    ])
+
     train_folder = datasets.ImageFolder(root="../dataset/train/",
                                         transform=transf)
     test_folder = datasets.ImageFolder(root="../dataset/test/",
