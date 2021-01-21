@@ -69,7 +69,6 @@ def get_data_loaders(batch_size, valid_split, seed):
 
 
 def train_model(model,
-                model_name,
                 train_loader,
                 valid_loader,
                 trainable_params,
@@ -85,6 +84,7 @@ def train_model(model,
 
     valid_loss_min = np.Inf  # track change in validation loss to save the model
     best_model = None
+    losses_train, losses_val = [], []
 
     for epoch in range(n_epochs):
         print(f"Epoch {epoch+1}")
@@ -105,7 +105,6 @@ def train_model(model,
             output = model(data)  # forward pass: predict
             loss = criterion(output, target)  # average loss per item
             train_loss += loss.item()
-
             loss.backward()  # backward pass: compute gradient of the loss
             optimizer.step()  # update parameters
 
@@ -124,16 +123,22 @@ def train_model(model,
         # average loss per epoch
         train_loss /= len(train_loader)
         valid_loss /= len(valid_loader)
+        losses_train.append(train_loss)
+        losses_val.append(valid_loss)
 
         print(f"Train loss: {train_loss:.6f} \tValid loss: {valid_loss:.6f}")
 
         # save model if validation loss has decreased
         if valid_loss <= valid_loss_min:
+            model_name = model.__class__.__name__
             path = MODEL_DIR / f"{model_name}.pt"
             print(f"Saving model to {path}")
             torch.save(model, path)
             valid_loss_min = valid_loss
             best_model = copy.deepcopy(model)
+
+    print(f"train losses per epoch:\n{losses_train}")
+    print(f"valid losses per epoch:\n{losses_val}")
 
     return best_model
 

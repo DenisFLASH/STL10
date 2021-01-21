@@ -1,3 +1,4 @@
+from pathlib import Path
 import sys
 
 from torchvision import models
@@ -50,7 +51,6 @@ if __name__ == "__main__":
         fc_layers = tl.freeze_feature_extractor(model=model)
         print(f"\nTraining FC layers (warm-up), freezing feature extractor\n")
         model = train_model(model=model,
-                            model_name=model_name,
                             train_loader=train_loader,
                             valid_loader=valid_loader,
                             trainable_params=fc_layers.parameters(),
@@ -61,7 +61,6 @@ if __name__ == "__main__":
         model.requires_grad_(True)
         print(f"\nTraining the whole model (fine-tuning)\n")
         model = train_model(model=model,
-                            model_name=model_name,
                             train_loader=train_loader,
                             valid_loader=valid_loader,
                             trainable_params=model.parameters(),
