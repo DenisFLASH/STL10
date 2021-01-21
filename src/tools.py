@@ -130,8 +130,8 @@ def train_model(model,
 
         # save model if validation loss has decreased
         if valid_loss <= valid_loss_min:
-            model_name = model.__class__.__name__
-            path = MODEL_DIR / f"{model_name}.pt"
+            filename = f"{model.__class__.__name__}_lr{lr}_ep{epoch+1}.pt"
+            path = MODEL_DIR / filename
             print(f"Saving model to {path}")
             torch.save(model, path)
             valid_loss_min = valid_loss
