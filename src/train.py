@@ -3,7 +3,7 @@ import sys
 from torchvision import models
 
 from tools import get_data_loaders, train_model
-from transfer_learning import replace_last_layer, freeze_feature_extractor
+import transfer_learning as tl
 
 
 BATCH_SIZE = 20
@@ -44,8 +44,10 @@ if __name__ == "__main__":
         # Two-stage Transfer Learning
 
         # 1) Replace last layer, freeze all feature layers, train FC layers
-        replace_last_layer(model=model, n_outputs=len(classes))
-        fc_layers = freeze_feature_extractor(model=model)
+        tl.replace_last_layer(model=model, n_outputs=len(classes))
+        tl.adapt_first_fc_layer(model=model)
+
+        fc_layers = tl.freeze_feature_extractor(model=model)
         print(f"\nTraining FC layers (warm-up), freezing feature extractor\n")
         model = train_model(model=model,
                             model_name=model_name,

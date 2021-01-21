@@ -49,3 +49,19 @@ def freeze_feature_extractor(model: nn.Module):
         p.requires_grad = True
 
     return fc_layers
+
+
+def adapt_first_fc_layer(model: nn.Module):
+    """
+    Since our image starts from size 96*96 (and not 224*224 as ImageNet),
+    after passing through conv+pool layers it becomes 3*3*512 instead of 7*7*512.
+    So, we have to adapt the way the first FC layer is connected to the last
+    pooling layer.
+    """
+    if model.__class__.__name__ == "VGG":
+
+        first_fc_in_features = 3 * 3 * 512
+        first_fc_out_features = model.classifier[0].out_features
+        model.avgpool = nn.AdaptiveAvgPool2d(output_size=(3, 3))
+        model.classifier[0] = nn.Linear(in_features=first_fc_in_features,
+                                        out_features=first_fc_out_features)
