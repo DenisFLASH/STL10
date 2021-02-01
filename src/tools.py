@@ -79,7 +79,8 @@ def train_model(model,
         model.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(trainable_params, lr=lr)
+    # TODO delete optimizer = optim.SGD(trainable_params, lr=lr)
+    optimizer = optim.SGD(model.parameters(), lr=lr)
     print(f"Learning rate: {lr}")
 
     valid_loss_min = np.Inf  # track change in validation loss to save the model
