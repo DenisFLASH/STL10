@@ -71,7 +71,6 @@ def get_data_loaders(batch_size, valid_split, seed):
 def train_model(model,
                 train_loader,
                 valid_loader,
-                trainable_params,
                 lr,
                 n_epochs):
 
@@ -79,7 +78,6 @@ def train_model(model,
         model.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    # TODO delete optimizer = optim.SGD(trainable_params, lr=lr)
     optimizer = optim.SGD(model.parameters(), lr=lr)
     print(f"Learning rate: {lr}")
 

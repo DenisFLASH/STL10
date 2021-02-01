@@ -1,4 +1,3 @@
-from pathlib import Path
 import sys
 
 from torchvision import models
@@ -48,12 +47,11 @@ if __name__ == "__main__":
         tl.replace_last_layer(model=model, n_outputs=len(classes))
         tl.adapt_first_fc_layer(model=model)
 
-        fc_layers = tl.freeze_feature_extractor(model=model)
+        tl.freeze_feature_extractor(model=model)
         print(f"\nTraining FC layers (warm-up), freezing feature extractor\n")
         model = train_model(model=model,
                             train_loader=train_loader,
                             valid_loader=valid_loader,
-                            trainable_params=fc_layers.parameters(),
                             lr=LR["warmup"],
                             n_epochs=EPOCHS["warmup"])
 
@@ -63,6 +61,5 @@ if __name__ == "__main__":
         model = train_model(model=model,
                             train_loader=train_loader,
                             valid_loader=valid_loader,
-                            trainable_params=model.parameters(),
                             lr=LR["fine-tune"],
                             n_epochs=EPOCHS["fine-tune"])

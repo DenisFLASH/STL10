@@ -32,8 +32,7 @@ def freeze_feature_extractor(model: nn.Module):
 
     Returns
     -------
-    fc_layers : nn.Module
-        Trainable FC layers.
+    None
     """
     fc_layers = None
 
@@ -48,9 +47,8 @@ def freeze_feature_extractor(model: nn.Module):
     for p in fc_layers.parameters():
         p.requires_grad = True
 
-    return fc_layers
 
-
+# TODO drop this function, after resizing initial input to 224*224
 def adapt_first_fc_layer(model: nn.Module):
     """
     Since our image starts from size 96*96 (and not 224*224 as ImageNet),
